@@ -1,13 +1,27 @@
 package se761.bestgroup.vsmreceiver;
 
-import se761.bestgroup.vsmreceiver.R;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.util.Log;
 import android.view.Menu;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -55,8 +69,66 @@ public class LogActivity extends Activity {
                 NfcAdapter.EXTRA_NDEF_MESSAGES);
         // only one message sent during the beam
         NdefMessage msg = (NdefMessage) rawMsgs[0];
-        listAdapter.add(new String(msg.getRecords()[0].getPayload()));
+        String json = new String(msg.getRecords()[0].getPayload());
+        listAdapter.add(json);
         // send the message somewhere
+        System.out.println("DEBUG: Creating async ");
+        SubmitVitalStats vitalStatsUpload = new SubmitVitalStats();
+        vitalStatsUpload.execute(json);
     }
+	
+	private class SubmitVitalStats extends AsyncTask<String, Void, Boolean>{
 
+		@Override
+		protected Boolean doInBackground(String... params) {
+
+			//instantiates httpclient to make request
+		    DefaultHttpClient httpclient = new DefaultHttpClient();
+
+		    //url with the post data
+		    System.out.println("DEBUG: Creating post ");
+		    HttpPost httpost = new HttpPost("http://vsm.herokuapp.com/patients/");
+
+		    //passes the results to a string builder/entity
+		    StringEntity se = null;
+			try {
+				se = new StringEntity(params[0].toString());
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+				return false;
+			}
+
+		    //sets the post request as the resulting string
+		    httpost.setEntity(se);
+		    //sets a request header so the page receving the request
+		    //will know what to do with it
+		    httpost.setHeader("Accept", "application/json");
+		    httpost.setHeader("Content-type", "application/json");
+
+		    System.out.println("DEBUG: getting response ");
+		    try {
+				HttpResponse response = httpclient.execute(httpost);
+				InputStream content = response.getEntity().getContent();
+				BufferedReader br = new BufferedReader(new InputStreamReader(content));
+				String line;
+				StringBuilder sb = new StringBuilder();
+				while((line = br.readLine())!= null){
+					sb.append(line);
+				}
+
+				Log.d("VSM", sb.toString());
+			} catch (ClientProtocolException e) {
+
+				e.printStackTrace();
+				return false;
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			}			
+		    System.out.println("DEBUG: async done");
+			return true;
+		}		
+	}
+
+	
 }
