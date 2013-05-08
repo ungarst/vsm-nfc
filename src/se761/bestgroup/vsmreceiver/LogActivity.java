@@ -70,6 +70,7 @@ public class LogActivity extends Activity {
         // only one message sent during the beam
         NdefMessage msg = (NdefMessage) rawMsgs[0];
         String json = new String(msg.getRecords()[0].getPayload());
+        Log.i("nfc", json);
         listAdapter.add(json);
         // send the message somewhere
         System.out.println("DEBUG: Creating async ");
