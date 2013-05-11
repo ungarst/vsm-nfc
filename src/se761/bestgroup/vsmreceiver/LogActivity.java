@@ -69,12 +69,15 @@ public class LogActivity extends Activity {
                 NfcAdapter.EXTRA_NDEF_MESSAGES);
         // only one message sent during the beam
         NdefMessage msg = (NdefMessage) rawMsgs[0];
-        String json = new String(msg.getRecords()[0].getPayload());
-        listAdapter.add(json);
+        String patient = new String(msg.getRecords()[0].getPayload());
+        String vitalInfo = new String(msg.getRecords()[1].getPayload());
+        listAdapter.add(patient);
+        listAdapter.add(vitalInfo);
         // send the message somewhere
         System.out.println("DEBUG: Creating async ");
         SubmitVitalStats vitalStatsUpload = new SubmitVitalStats();
-        vitalStatsUpload.execute(json);
+        vitalStatsUpload.execute(patient);
+        vitalStatsUpload.execute(vitalInfo);
     }
 	
 	private class SubmitVitalStats extends AsyncTask<String, Void, Boolean>{
