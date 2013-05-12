@@ -101,6 +101,10 @@ public class LogActivity extends Activity {
 			StringEntity patientSE = null;
 			StringEntity vitalStatsSE = null;
 			String patientString = params[0].toString();
+			String vitalInfoString = params[1].toString();
+			
+			Log.d("VSM-P", patientString);
+			Log.d("VSM-V", vitalInfoString);
 			String nhi;
 			try {
 				nhi = new JSONObject(patientString).getString("nhi");
@@ -110,7 +114,7 @@ public class LogActivity extends Activity {
 			}
 			try {
 				patientSE = new StringEntity(patientString);
-				vitalStatsSE = new StringEntity(params[1].toString());
+				vitalStatsSE = new StringEntity(vitalInfoString);
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 				return false;
