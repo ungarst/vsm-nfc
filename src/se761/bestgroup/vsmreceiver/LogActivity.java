@@ -67,6 +67,7 @@ public class LogActivity extends Activity {
 	}
 
 	void processIntent(Intent intent) {
+
 		Parcelable[] rawMsgs = intent
 				.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
 		// only one message sent during the beam
@@ -84,6 +85,7 @@ public class LogActivity extends Activity {
 	private class SubmitVitalStats extends AsyncTask<String, Void, Boolean> {
 
 		private DefaultHttpClient httpclient;
+
 
 		@Override
 		protected Boolean doInBackground(String... params) {
