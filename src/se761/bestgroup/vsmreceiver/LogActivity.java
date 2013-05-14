@@ -73,7 +73,9 @@ public class LogActivity extends Activity {
 		// only one message sent during the beam
 		NdefMessage msg = (NdefMessage) rawMsgs[0];
 		String patient = new String(msg.getRecords()[0].getPayload());
+		Log.d("Receiver",patient);
 		String vitalInfo = new String(msg.getRecords()[1].getPayload());
+		Log.d("Receiver",vitalInfo);
 		listAdapter.add(patient);
 		listAdapter.add(vitalInfo);
 		// send the message somewhere
@@ -96,15 +98,20 @@ public class LogActivity extends Activity {
 			// url with the post data
 			System.out.println("DEBUG: Creating post ");
 
-
 			// passes the results to a string builder/entity
 			StringEntity patientSE = null;
 			StringEntity vitalStatsSE = null;
-			String patientString = params[0].toString();
-			String vitalInfoString = params[1].toString();
+			String patientString, vitalInfoString;
+			try {
+				patientString = params[0].toString();
+				vitalInfoString = params[1].toString();
+			} catch (IndexOutOfBoundsException e){
+				// incorrect msg
+				return false;
+			}
 			
-			Log.d("VSM-P", patientString);
-			Log.d("VSM-V", vitalInfoString);
+			Log.v("Receiver", patientString);
+			Log.v("Receiver", vitalInfoString);
 			String nhi;
 			try {
 				nhi = new JSONObject(patientString).getString("nhi");
@@ -121,8 +128,10 @@ public class LogActivity extends Activity {
 			}
 			
 			boolean result = true;
+			Log.v("Receiver","Patients Response");
 			result = httpPost(patientSE, new HttpPost(
 					"http://vsm.herokuapp.com/patients/"));
+			Log.v("Receiver","Vitals Response");
 			result = httpPost(vitalStatsSE, new HttpPost(
 					"http://vsm.herokuapp.com/patients/" + nhi + "/vitalinfos/"));
 			
@@ -150,7 +159,7 @@ public class LogActivity extends Activity {
 					sb.append(line);
 				}
 
-				Log.d("VSM", sb.toString());
+				Log.v("Receiver Response", sb.toString());
 			} catch (ClientProtocolException e) {
 
 				e.printStackTrace();
