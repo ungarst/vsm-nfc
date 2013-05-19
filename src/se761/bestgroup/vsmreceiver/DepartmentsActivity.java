@@ -15,13 +15,13 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -55,12 +55,10 @@ public class DepartmentsActivity extends Activity {
 				String department = (String) listView
 						.getItemAtPosition(position);
 
-				httpPost(department, new HttpPost(
-						"http://vsm.herokuapp.com/login/"));
 				Toast.makeText(getApplicationContext(),
 						"Department set to: " + department, Toast.LENGTH_SHORT)
 						.show();
-
+				new Post().execute(department);
 				startActivity(new Intent(activity, LogActivity.class));
 			}
 		});
@@ -74,49 +72,54 @@ public class DepartmentsActivity extends Activity {
 		return true;
 	}
 
-	private boolean httpPost(String department, HttpPost httpost) {
+	private class Post extends AsyncTask<String, Void, Boolean> {
 
-		HttpClient httpclient = new DefaultHttpClient();
+		@Override
+		protected Boolean doInBackground(String... departments) {
 
-		List<NameValuePair> params = new ArrayList<NameValuePair>();
-		params.add(new BasicNameValuePair("department", department));
+			HttpClient httpclient = new DefaultHttpClient();
+			HttpPost httpost = new HttpPost("http://vsm.herokuapp.com/login/");
 
-		try {
-			httpost.setEntity(new UrlEncodedFormEntity(params, HTTP.UTF_8));
-		} catch (UnsupportedEncodingException e1) {
-			e1.printStackTrace();
-		}
+			List<NameValuePair> params = new ArrayList<NameValuePair>();
+			params.add(new BasicNameValuePair("department", departments[0]));
 
-		// sets a request header so the page receving the request
-		// will know what to do with it
-		httpost.setHeader("Accept", "application/json");
-		httpost.setHeader("Content-type", "application/json");
-
-		try {
-			httpclient = new DefaultHttpClient();
-			HttpResponse response = httpclient.execute(httpost);
-			InputStream content = response.getEntity().getContent();
-			BufferedReader br = new BufferedReader(new InputStreamReader(
-					content));
-			String line;
-			StringBuilder sb = new StringBuilder();
-			while ((line = br.readLine()) != null) {
-				sb.append(line);
+			try {
+				httpost.setEntity(new UrlEncodedFormEntity(params, HTTP.UTF_8));
+			} catch (UnsupportedEncodingException e1) {
+				e1.printStackTrace();
 			}
-			Header[] mCookies = response.getHeaders("cookie");
-			for(Header h : mCookies){
-				Log.v("Cookie",h.toString());
-			}
-			Log.v("Receiver Response", sb.toString());
-		} catch (ClientProtocolException e) {
 
-			e.printStackTrace();
-			return false;
-		} catch (IOException e) {
-			e.printStackTrace();
-			return false;
+			// sets a request header so the page receving the request
+			// will know what to do with it
+			httpost.setHeader("Accept", "application/json");
+			httpost.setHeader("Content-type", "application/json");
+
+			try {
+				httpclient = new DefaultHttpClient();
+				HttpResponse response = httpclient.execute(httpost);
+				InputStream content = response.getEntity().getContent();
+				BufferedReader br = new BufferedReader(new InputStreamReader(
+						content));
+				String line;
+				StringBuilder sb = new StringBuilder();
+				while ((line = br.readLine()) != null) {
+					sb.append(line);
+				}
+				Header[] mCookies = response.getHeaders("cookie");
+				for(Header h : mCookies){
+					Log.v("Cookie", h.toString());
+				}
+				Log.v("Receiver Response", sb.toString());
+			} catch (ClientProtocolException e) {
+				e.printStackTrace();
+				return false;
+			} catch (IOException e) {
+				e.printStackTrace();
+				return false;
+			}
+			return true;
 		}
-		return true;
 	}
+	
 
 }
