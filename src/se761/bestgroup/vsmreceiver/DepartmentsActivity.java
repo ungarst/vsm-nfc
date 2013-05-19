@@ -105,7 +105,8 @@ public class DepartmentsActivity extends Activity {
 				while ((line = br.readLine()) != null) {
 					sb.append(line);
 				}
-				Header[] mCookies = response.getHeaders("cookie");
+				Header[] mCookies = response.getHeaders("department");
+				Log.v("Cookie", "Cookies: "+mCookies.length);
 				for(Header h : mCookies){
 					Log.v("Cookie", h.toString());
 				}
