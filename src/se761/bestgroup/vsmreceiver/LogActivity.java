@@ -23,6 +23,7 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -37,7 +38,6 @@ public class LogActivity extends Activity {
 		setContentView(R.layout.activity_log);
 
 		mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
-
 		listAdapter = new ArrayAdapter<String>(this,
 				android.R.layout.simple_list_item_1);
 		ListView lv = (ListView) findViewById(R.id.logListView);
@@ -48,6 +48,15 @@ public class LogActivity extends Activity {
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.log, menu);
+		return true;
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()){
+		case R.id.action_departments:
+			startActivity(new Intent(this, DepartmentsActivity.class));
+		}
 		return true;
 	}
 
@@ -74,14 +83,14 @@ public class LogActivity extends Activity {
 		NdefMessage msg = (NdefMessage) rawMsgs[0];
 		String patient = new String(msg.getRecords()[0].getPayload());
 		Log.d("Receiver",patient);
-		String vitalInfo = new String(msg.getRecords()[1].getPayload());
-		Log.d("Receiver",vitalInfo);
+//		String vitalInfo = new String(msg.getRecords()[1].getPayload());
+//		Log.d("Receiver",vitalInfo);
 		listAdapter.add(patient);
-		listAdapter.add(vitalInfo);
+//		listAdapter.add(vitalInfo);
 		// send the message somewhere
 		System.out.println("DEBUG: Creating async ");
 		SubmitVitalStats vitalStatsUpload = new SubmitVitalStats();
-		vitalStatsUpload.execute(patient, vitalInfo);
+		vitalStatsUpload.execute(patient);
 	}
 
 	private class SubmitVitalStats extends AsyncTask<String, Void, Boolean> {
@@ -100,18 +109,19 @@ public class LogActivity extends Activity {
 
 			// passes the results to a string builder/entity
 			StringEntity patientSE = null;
-			StringEntity vitalStatsSE = null;
-			String patientString, vitalInfoString;
+//			StringEntity vitalStatsSE = null;
+			String patientString;
+//			String vitalInfoString;
 			try {
 				patientString = params[0].toString();
-				vitalInfoString = params[1].toString();
+//				vitalInfoString = params[1].toString();
 			} catch (IndexOutOfBoundsException e){
 				// incorrect msg
 				return false;
 			}
 			
 			Log.v("Receiver", patientString);
-			Log.v("Receiver", vitalInfoString);
+//			Log.v("Receiver", vitalInfoString);
 			String nhi;
 			try {
 				nhi = new JSONObject(patientString).getString("nhi");
@@ -121,7 +131,7 @@ public class LogActivity extends Activity {
 			}
 			try {
 				patientSE = new StringEntity(patientString);
-				vitalStatsSE = new StringEntity(vitalInfoString);
+//				vitalStatsSE = new StringEntity(vitalInfoString);
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 				return false;
@@ -132,8 +142,8 @@ public class LogActivity extends Activity {
 			result = httpPost(patientSE, new HttpPost(
 					"http://vsm.herokuapp.com/patients/"));
 			Log.v("Receiver","Vitals Response");
-			result = httpPost(vitalStatsSE, new HttpPost(
-					"http://vsm.herokuapp.com/patients/" + nhi + "/vitalinfos/"));
+//			result = httpPost(vitalStatsSE, new HttpPost(
+//					"http://vsm.herokuapp.com/patients/" + nhi + "/vitalinfos/"));
 			
 			System.out.println("DEBUG: async done");
 			return result;
