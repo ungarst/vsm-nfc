@@ -8,22 +8,22 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.protocol.HTTP;
+
+import com.google.gson.Gson;
 
 import android.app.Activity;
-import android.content.Intent;
+import android.content.SharedPreferences.Editor;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.AdapterView;
@@ -39,27 +39,21 @@ public class DepartmentsActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_departments);
 
-		String[] values = new String[] { "Pediatrics", "Gynocology" };
+		String[] values = new String[] { "Pediatrics", "Gynocology", "Cardiology" };
 		List<String> departments = new ArrayList<String>();
 		for (String v : values)
 			departments.add(v);
 
 		final ListView listView = (ListView) findViewById(R.id.listDepartments);
-		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-				android.R.layout.simple_list_item_1);
+		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
 		final DepartmentsActivity activity = this;
 		listView.setAdapter(adapter);
 		listView.setOnItemClickListener(new OnItemClickListener() {
-			public void onItemClick(AdapterView<?> parent, View view,
-					int position, long id) {
-				String department = (String) listView
-						.getItemAtPosition(position);
+			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+				String department = (String) listView.getItemAtPosition(position);
 
-				Toast.makeText(getApplicationContext(),
-						"Department set to: " + department, Toast.LENGTH_SHORT)
-						.show();
+				Toast.makeText(getApplicationContext(), "Department set to: " + department, Toast.LENGTH_SHORT).show();
 				new Post().execute(department);
-				startActivity(new Intent(activity, LogActivity.class));
 			}
 		});
 		adapter.addAll(departments);
@@ -72,55 +66,58 @@ public class DepartmentsActivity extends Activity {
 		return true;
 	}
 
-	private class Post extends AsyncTask<String, Void, Boolean> {
+	private class Post extends AsyncTask<String, Void, Cookie> {
 
 		@Override
-		protected Boolean doInBackground(String... departments) {
+		protected Cookie doInBackground(String... departments) {
 
 			HttpClient httpclient = new DefaultHttpClient();
-			HttpPost httpost = new HttpPost("http://vsm.herokuapp.com/login/");
+			HttpPost httppost = new HttpPost("http://vsm.herokuapp.com/login/");
 
 			List<NameValuePair> params = new ArrayList<NameValuePair>();
 			params.add(new BasicNameValuePair("department", departments[0]));
-
 			try {
-				httpost.setEntity(new UrlEncodedFormEntity(params, HTTP.UTF_8));
+				httppost.setEntity(new UrlEncodedFormEntity(params, "utf-8"));
 			} catch (UnsupportedEncodingException e1) {
 				e1.printStackTrace();
 			}
 
 			// sets a request header so the page receving the request
 			// will know what to do with it
-			httpost.setHeader("Accept", "application/json");
-			httpost.setHeader("Content-type", "application/json");
+			httppost.setHeader("Accept", "application/json");
+			// httppost.setHeader("Content-type", "application/json");
 
 			try {
 				httpclient = new DefaultHttpClient();
-				HttpResponse response = httpclient.execute(httpost);
+				HttpResponse response = httpclient.execute(httppost);
+
 				InputStream content = response.getEntity().getContent();
-				BufferedReader br = new BufferedReader(new InputStreamReader(
-						content));
+				BufferedReader br = new BufferedReader(new InputStreamReader(content));
 				String line;
 				StringBuilder sb = new StringBuilder();
 				while ((line = br.readLine()) != null) {
 					sb.append(line);
 				}
-				Header[] mCookies = response.getHeaders("department");
-				Log.v("Cookie", "Cookies: "+mCookies.length);
-				for(Header h : mCookies){
-					Log.v("Cookie", h.toString());
-				}
-				Log.v("Receiver Response", sb.toString());
+				List<Cookie> cookies = ((DefaultHttpClient) httpclient).getCookieStore().getCookies();
+				return cookies.get(0);
 			} catch (ClientProtocolException e) {
 				e.printStackTrace();
-				return false;
+				return null;
 			} catch (IOException e) {
 				e.printStackTrace();
-				return false;
+				return null;
 			}
-			return true;
+		}
+
+		@Override
+		protected void onPostExecute(Cookie result) {
+			Editor edit = getSharedPreferences("cookie", MODE_PRIVATE).edit();
+			Gson gson = new Gson();
+			System.out.println(result.getClass());
+			edit.putString("department", gson.toJson(result));
+			edit.commit();
+			finish();
 		}
 	}
-	
 
 }
