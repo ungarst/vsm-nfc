@@ -9,12 +9,14 @@ import java.io.UnsupportedEncodingException;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.cookie.BasicClientCookie2;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences.Editor;
 import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
 import android.os.AsyncTask;
@@ -46,7 +48,9 @@ public class LogActivity extends Activity {
 		ListView lv = (ListView) findViewById(R.id.logListView);
 		lv.setAdapter(listAdapter);
 		
-		_deptCookie = new BasicClientCookie2("department", "default");
+		String savedDepartment = getSharedPreferences("department_cookie", MODE_PRIVATE).getString("department", null);
+		_deptCookie = new BasicClientCookie2("department", savedDepartment != null ? savedDepartment : "Cardiology");
+		_deptCookie.setDomain("vsm.herokuapp.com");
 	}
 
 	@Override
@@ -75,7 +79,11 @@ public class LogActivity extends Activity {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		String dept = data.getStringExtra("department");
-		_deptCookie = new BasicClientCookie2("department", dept);
+		Editor edit = getSharedPreferences("department_cookie", MODE_PRIVATE).edit();
+		edit.putString("department", dept);
+		edit.commit();
+		_deptCookie = new BasicClientCookie2("department", dept.trim());
+		_deptCookie.setDomain("vsm.herokuapp.com");
 		setTitle(dept);
 	}
 	@Override
@@ -109,6 +117,10 @@ public class LogActivity extends Activity {
 			httpclient = new DefaultHttpClient();
 			httpclient.getCookieStore().addCookie(_deptCookie);
 
+			for(Cookie c : httpclient.getCookieStore().getCookies()){
+				System.out.println(c);
+			}
+			
 			// passes the results to a string builder/entity
 			StringEntity patientSE = null;
 			String patientString;
