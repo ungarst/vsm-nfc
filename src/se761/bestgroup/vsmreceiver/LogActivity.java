@@ -11,6 +11,7 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.cookie.BasicClientCookie2;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -30,6 +31,8 @@ public class LogActivity extends Activity {
 	@SuppressWarnings("unused")
 	private NfcAdapter mNfcAdapter;
 	private ArrayAdapter<String> listAdapter;
+	private BasicClientCookie2 _deptCookie;
+	
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +45,8 @@ public class LogActivity extends Activity {
 				android.R.layout.simple_list_item_1);
 		ListView lv = (ListView) findViewById(R.id.logListView);
 		lv.setAdapter(listAdapter);
+		
+		_deptCookie = new BasicClientCookie2("department", "default");
 	}
 
 	@Override
@@ -54,7 +59,7 @@ public class LogActivity extends Activity {
 	@Override
 	public boolean onMenuItemSelected(int featureId, MenuItem item) {
 		if(item.getItemId() == R.id.action_departments){
-			startActivity(new Intent(this, DepartmentsActivity.class));
+			startActivityForResult(new Intent(this, DepartmentsActivity.class), 1);
 		}
 		return true;
 	}
@@ -67,7 +72,12 @@ public class LogActivity extends Activity {
 			processIntent(getIntent());
 		}
 	}
-
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		String dept = data.getStringExtra("department");
+		_deptCookie = new BasicClientCookie2("department", dept);
+		setTitle(dept);
+	}
 	@Override
 	public void onNewIntent(Intent intent) {
 		// onResume gets called after this to handle the intent
@@ -82,13 +92,10 @@ public class LogActivity extends Activity {
 		NdefMessage msg = (NdefMessage) rawMsgs[0];
 		String patient = new String(msg.getRecords()[0].getPayload());
 		Log.d("Receiver",patient);
-		String vitalInfo = new String(msg.getRecords()[1].getPayload());
-		Log.d("Receiver",vitalInfo);
 		listAdapter.add(patient);
-		listAdapter.add(vitalInfo);
 		// send the message somewhere
 		SubmitVitalStats vitalStatsUpload = new SubmitVitalStats();
-		vitalStatsUpload.execute(patient, vitalInfo);
+		vitalStatsUpload.execute(patient);
 	}
 
 	private class SubmitVitalStats extends AsyncTask<String, Void, Boolean> {
@@ -100,6 +107,7 @@ public class LogActivity extends Activity {
 
 			// instantiates httpclient to make request
 			httpclient = new DefaultHttpClient();
+			httpclient.getCookieStore().addCookie(_deptCookie);
 
 			// passes the results to a string builder/entity
 			StringEntity patientSE = null;
@@ -121,7 +129,7 @@ public class LogActivity extends Activity {
 			
 			boolean result = true;
 			Log.v("Receiver", "Patients Response");
-			result = httpPost(patientSE, new HttpPost("http://vsm.herokuapp.com/patients/"));
+			result = httpPost(patientSE, new HttpPost(getResources().getString(R.string.patients_endpoint)));
 			Log.v("Receiver", "Vitals Response");	
 			return result;
 		}
@@ -144,8 +152,6 @@ public class LogActivity extends Activity {
 				while ((line = br.readLine()) != null) {
 					sb.append(line);
 				}
-
-				Log.v("Receiver Response", sb.toString());
 			} catch (ClientProtocolException e) {
 
 				e.printStackTrace();

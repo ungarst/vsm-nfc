@@ -14,7 +14,7 @@
     <!-- JSON Keys -->
     <string name="department">department</string>
     <string name="departments">departments</string>
-    <string name="department_name">department</string>
+    <string name="department_name">department_name</string>
     
     <!-- Shared Preference Keys -->
     <string name="cookie">cookie</string>
