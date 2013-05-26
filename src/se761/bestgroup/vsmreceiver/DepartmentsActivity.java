@@ -66,13 +66,6 @@ public class DepartmentsActivity extends Activity {
 		new HttpTask(false).execute("");
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.departments, menu);
-		return true;
-	}
-
 	private List<String> getDepartments() {
 		List<String> departments = new ArrayList<String>();
 		HttpGet get = new HttpGet(getStr(R.string.departments_endpoint));
