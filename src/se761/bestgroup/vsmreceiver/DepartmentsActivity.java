@@ -22,13 +22,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.google.gson.Gson;
-
-import android.app.Activity;
+import android.app.ListActivity;
 import android.content.SharedPreferences.Editor;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.view.Menu;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -36,20 +33,19 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
-public class DepartmentsActivity extends Activity {
+import com.google.gson.Gson;
 
-	private List<String> departments;
+public class DepartmentsActivity extends ListActivity {
+
 	private ArrayAdapter<String> adapter;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_departments);
 
-		final ListView listView = (ListView) findViewById(R.id.listDepartments);
+		final ListView listView = getListView();
 		adapter = new ArrayAdapter<String>(this,
 				android.R.layout.simple_list_item_1);
-		final DepartmentsActivity activity = this;
 		listView.setAdapter(adapter);
 		listView.setOnItemClickListener(new OnItemClickListener() {
 			public void onItemClick(AdapterView<?> parent, View view,

@@ -11,8 +11,6 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -28,6 +26,7 @@ import android.widget.ListView;
 
 public class LogActivity extends Activity {
 
+	@SuppressWarnings("unused")
 	private NfcAdapter mNfcAdapter;
 	private ArrayAdapter<String> listAdapter;
 
@@ -95,7 +94,6 @@ public class LogActivity extends Activity {
 
 			// passes the results to a string builder/entity
 			StringEntity patientSE = null;
-			StringEntity vitalStatsSE = null;
 			String patientString;
 			try {
 				patientString = params[0].toString();
