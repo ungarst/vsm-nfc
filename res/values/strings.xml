@@ -3,6 +3,20 @@
 
     <string name="app_name">VsmReceiver</string>
     <string name="action_settings">Settings</string>
-    <string name="hello_world">Hello world!</string>
 
+    <string name="action_departments">Departments</string>
+    <string name="title_activity_departments">DepartmentsActivity</string>
+	
+    <!-- End points -->
+    <string name="departments_endpoint">http://vsm.herokuapp.com/departments</string>
+    <string name="patients_endpoint">http://vsm.herokuapp.com/patients</string>
+    <string name="login_endpoint">http://vsm.herokuapp.com/login</string>
+    <!-- JSON Keys -->
+    <string name="department">department</string>
+    <string name="departments">departments</string>
+    <string name="department_name">department</string>
+    
+    <!-- Shared Preference Keys -->
+    <string name="cookie">cookie</string>
+    
 </resources>

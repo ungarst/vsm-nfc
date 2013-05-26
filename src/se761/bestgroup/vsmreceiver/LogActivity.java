@@ -79,7 +79,6 @@ public class LogActivity extends Activity {
 		listAdapter.add(patient);
 		listAdapter.add(vitalInfo);
 		// send the message somewhere
-		System.out.println("DEBUG: Creating async ");
 		SubmitVitalStats vitalStatsUpload = new SubmitVitalStats();
 		vitalStatsUpload.execute(patient, vitalInfo);
 	}
@@ -88,66 +87,46 @@ public class LogActivity extends Activity {
 
 		private DefaultHttpClient httpclient;
 
-
 		@Override
 		protected Boolean doInBackground(String... params) {
 
 			// instantiates httpclient to make request
 			httpclient = new DefaultHttpClient();
 
-			// url with the post data
-			System.out.println("DEBUG: Creating post ");
-
 			// passes the results to a string builder/entity
 			StringEntity patientSE = null;
 			StringEntity vitalStatsSE = null;
-			String patientString, vitalInfoString;
+			String patientString;
 			try {
 				patientString = params[0].toString();
-				vitalInfoString = params[1].toString();
-			} catch (IndexOutOfBoundsException e){
+			} catch (IndexOutOfBoundsException e) {
 				// incorrect msg
 				return false;
 			}
 			
 			Log.v("Receiver", patientString);
-			Log.v("Receiver", vitalInfoString);
-			String nhi;
-			try {
-				nhi = new JSONObject(patientString).getString("nhi");
-			} catch (JSONException e1) {
-				e1.printStackTrace();
-				return false;
-			}
 			try {
 				patientSE = new StringEntity(patientString);
-				vitalStatsSE = new StringEntity(vitalInfoString);
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 				return false;
 			}
 			
 			boolean result = true;
-			Log.v("Receiver","Patients Response");
-			result = httpPost(patientSE, new HttpPost(
-					"http://vsm.herokuapp.com/patients/"));
-			Log.v("Receiver","Vitals Response");
-			result = httpPost(vitalStatsSE, new HttpPost(
-					"http://vsm.herokuapp.com/patients/" + nhi + "/vitalinfos/"));
-			
-			System.out.println("DEBUG: async done");
+			Log.v("Receiver", "Patients Response");
+			result = httpPost(patientSE, new HttpPost("http://vsm.herokuapp.com/patients/"));
+			Log.v("Receiver", "Vitals Response");	
 			return result;
 		}
 		
 		private boolean httpPost(StringEntity se, HttpPost httpost) {
 			// sets the post request as the resulting string
 			httpost.setEntity(se);
-			// sets a request header so the page receving the request
+			// sets a request header so the page receiving the request
 			// will know what to do with it
 			httpost.setHeader("Accept", "application/json");
 			httpost.setHeader("Content-type", "application/json");
 
-			System.out.println("DEBUG: getting response ");
 			try {
 				HttpResponse response = httpclient.execute(httpost);
 				InputStream content = response.getEntity().getContent();
