@@ -9,12 +9,14 @@ import java.io.UnsupportedEncodingException;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.cookie.BasicClientCookie2;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences.Editor;
 import android.nfc.NdefMessage;
 import android.nfc.NfcAdapter;
 import android.os.AsyncTask;
@@ -31,6 +33,7 @@ public class LogActivity extends Activity {
 	@SuppressWarnings("unused")
 	private NfcAdapter mNfcAdapter;
 	private ArrayAdapter<String> listAdapter;
+
 	private BasicClientCookie2 _deptCookie;
 	
 
@@ -40,13 +43,13 @@ public class LogActivity extends Activity {
 		setContentView(R.layout.activity_log);
 
 		mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
-
-		listAdapter = new ArrayAdapter<String>(this,
-				android.R.layout.simple_list_item_1);
+		listAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
 		ListView lv = (ListView) findViewById(R.id.logListView);
 		lv.setAdapter(listAdapter);
 		
-		_deptCookie = new BasicClientCookie2("department", "default");
+		String savedDepartment = getSharedPreferences("department_cookie", MODE_PRIVATE).getString("department", null);
+		_deptCookie = new BasicClientCookie2("department", savedDepartment != null ? savedDepartment : "Cardiology");
+		_deptCookie.setDomain("vsm.herokuapp.com");
 	}
 
 	@Override
@@ -65,18 +68,32 @@ public class LogActivity extends Activity {
 	}
 
 	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.action_departments:
+			startActivityForResult(new Intent(this, DepartmentsActivity.class), 1);
+		}
+		return true;
+	}
+
+	@Override
 	public void onResume() {
 		super.onResume();
 		// Check to see that the Activity started due to an Android Beam
 		if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(getIntent().getAction())) {
+			System.out.println("YOUR MUM");
 			processIntent(getIntent());
 		}
 	}
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		String dept = data.getStringExtra("department");
-		_deptCookie = new BasicClientCookie2("department", dept);
-		setTitle(dept); 
+		Editor edit = getSharedPreferences("department_cookie", MODE_PRIVATE).edit();
+		edit.putString("department", dept);
+		edit.commit();
+		_deptCookie = new BasicClientCookie2("department", dept.trim());
+		_deptCookie.setDomain("vsm.herokuapp.com");
+		setTitle(dept);
 	}
 	@Override
 	public void onNewIntent(Intent intent) {
@@ -86,12 +103,11 @@ public class LogActivity extends Activity {
 
 	void processIntent(Intent intent) {
 
-		Parcelable[] rawMsgs = intent
-				.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
+		Parcelable[] rawMsgs = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
 		// only one message sent during the beam
 		NdefMessage msg = (NdefMessage) rawMsgs[0];
 		String patient = new String(msg.getRecords()[0].getPayload());
-		Log.d("Receiver",patient);
+
 		listAdapter.add(patient);
 		// send the message somewhere
 		SubmitVitalStats vitalStatsUpload = new SubmitVitalStats();
@@ -109,6 +125,10 @@ public class LogActivity extends Activity {
 			httpclient = new DefaultHttpClient();
 			httpclient.getCookieStore().addCookie(_deptCookie);
 
+			for(Cookie c : httpclient.getCookieStore().getCookies()){
+				System.out.println(c);
+			}
+			
 			// passes the results to a string builder/entity
 			StringEntity patientSE = null;
 			String patientString;
@@ -133,7 +153,7 @@ public class LogActivity extends Activity {
 			Log.v("Receiver", "Vitals Response");	
 			return result;
 		}
-		
+
 		private boolean httpPost(StringEntity se, HttpPost httpost) {
 			// sets the post request as the resulting string
 			httpost.setEntity(se);
@@ -145,8 +165,7 @@ public class LogActivity extends Activity {
 			try {
 				HttpResponse response = httpclient.execute(httpost);
 				InputStream content = response.getEntity().getContent();
-				BufferedReader br = new BufferedReader(new InputStreamReader(
-						content));
+				BufferedReader br = new BufferedReader(new InputStreamReader(content));
 				String line;
 				StringBuilder sb = new StringBuilder();
 				while ((line = br.readLine()) != null) {
@@ -163,6 +182,5 @@ public class LogActivity extends Activity {
 			return true;
 		}
 	}
-
 
 }
