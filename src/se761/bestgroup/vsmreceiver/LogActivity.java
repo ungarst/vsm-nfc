@@ -76,7 +76,7 @@ public class LogActivity extends Activity {
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		String dept = data.getStringExtra("department");
 		_deptCookie = new BasicClientCookie2("department", dept);
-		setTitle(dept);
+		setTitle(dept); 
 	}
 	@Override
 	public void onNewIntent(Intent intent) {
