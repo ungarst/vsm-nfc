@@ -13,6 +13,8 @@ import org.apache.http.cookie.Cookie;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.cookie.BasicClientCookie2;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -131,12 +133,18 @@ public class LogActivity extends Activity {
 			
 			// passes the results to a string builder/entity
 			StringEntity patientSE = null;
-			String patientString;
+			String patientString = null;
 			try {
-				patientString = params[0].toString();
+				JSONObject j = new JSONObject(params[0]);
+				j.getJSONObject("vitalinfo").put("location", "Starship Childrens' Hospital");
+				patientString = j.toString();
+				Log.d("json", patientString);
 			} catch (IndexOutOfBoundsException e) {
 				// incorrect msg
 				return false;
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 			
 			Log.v("Receiver", patientString);
@@ -171,6 +179,7 @@ public class LogActivity extends Activity {
 				while ((line = br.readLine()) != null) {
 					sb.append(line);
 				}
+				Log.d("response", sb.toString());
 			} catch (ClientProtocolException e) {
 
 				e.printStackTrace();
