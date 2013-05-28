@@ -37,7 +37,6 @@ public class LogActivity extends Activity {
 	private ArrayAdapter<String> listAdapter;
 
 	private BasicClientCookie2 _deptCookie;
-	
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -48,7 +47,7 @@ public class LogActivity extends Activity {
 		listAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
 		ListView lv = (ListView) findViewById(R.id.logListView);
 		lv.setAdapter(listAdapter);
-		
+
 		String savedDepartment = getSharedPreferences("department_cookie", MODE_PRIVATE).getString("department", null);
 		_deptCookie = new BasicClientCookie2("department", savedDepartment != null ? savedDepartment : "Cardiology");
 		_deptCookie.setDomain("vsm.herokuapp.com");
@@ -60,10 +59,10 @@ public class LogActivity extends Activity {
 		getMenuInflater().inflate(R.menu.log, menu);
 		return true;
 	}
-	
+
 	@Override
 	public boolean onMenuItemSelected(int featureId, MenuItem item) {
-		if(item.getItemId() == R.id.action_departments){
+		if (item.getItemId() == R.id.action_departments) {
 			startActivityForResult(new Intent(this, DepartmentsActivity.class), 1);
 		}
 		return true;
@@ -87,6 +86,11 @@ public class LogActivity extends Activity {
 			processIntent(getIntent());
 		}
 	}
+
+	/**
+	 * Get the department cookie from the shared preferences Set it to the
+	 * cookie field.
+	 */
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		String dept = data.getStringExtra("department");
@@ -97,12 +101,19 @@ public class LogActivity extends Activity {
 		_deptCookie.setDomain("vsm.herokuapp.com");
 		setTitle(dept);
 	}
+
 	@Override
 	public void onNewIntent(Intent intent) {
 		// onResume gets called after this to handle the intent
 		setIntent(intent);
 	}
 
+	/**
+	 * Get any messages from the intent and upload them to the server using the
+	 * SubmitVitalStats task
+	 * 
+	 * @param intent
+	 */
 	void processIntent(Intent intent) {
 
 		Parcelable[] rawMsgs = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
@@ -116,6 +127,12 @@ public class LogActivity extends Activity {
 		vitalStatsUpload.execute(patient);
 	}
 
+	/**
+	 * Async task for network access
+	 * 
+	 * @author Jourdan Harvey
+	 * 
+	 */
 	private class SubmitVitalStats extends AsyncTask<String, Void, Boolean> {
 
 		private DefaultHttpClient httpclient;
@@ -125,12 +142,14 @@ public class LogActivity extends Activity {
 
 			// instantiates httpclient to make request
 			httpclient = new DefaultHttpClient();
+			// add our department cookie to the client so that we know where to
+			// put our patient
 			httpclient.getCookieStore().addCookie(_deptCookie);
 
-			for(Cookie c : httpclient.getCookieStore().getCookies()){
+			for (Cookie c : httpclient.getCookieStore().getCookies()) {
 				System.out.println(c);
 			}
-			
+
 			// passes the results to a string builder/entity
 			StringEntity patientSE = null;
 			String patientString = null;
@@ -146,32 +165,40 @@ public class LogActivity extends Activity {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
-			Log.v("Receiver", patientString);
+
 			try {
 				patientSE = new StringEntity(patientString);
 			} catch (UnsupportedEncodingException e) {
 				e.printStackTrace();
 				return false;
 			}
-			
+
 			boolean result = true;
 			Log.v("Receiver", "Patients Response");
+			// call httpPost method to post the patientData to the server
 			result = httpPost(patientSE, new HttpPost(getResources().getString(R.string.patients_endpoint)));
-			Log.v("Receiver", "Vitals Response");	
+			Log.v("Receiver", "Vitals Response");
 			return result;
 		}
 
-		private boolean httpPost(StringEntity se, HttpPost httpost) {
+		/**
+		 * Take an HttpPost and execute it
+		 * 
+		 * @param se
+		 * @param httppost
+		 * @return
+		 */
+		private boolean httpPost(StringEntity se, HttpPost httppost) {
 			// sets the post request as the resulting string
-			httpost.setEntity(se);
+			httppost.setEntity(se);
 			// sets a request header so the page receiving the request
 			// will know what to do with it
-			httpost.setHeader("Accept", "application/json");
-			httpost.setHeader("Content-type", "application/json");
+			httppost.setHeader("Accept", "application/json");
+			httppost.setHeader("Content-type", "application/json");
 
 			try {
-				HttpResponse response = httpclient.execute(httpost);
+				// execute, get response, read
+				HttpResponse response = httpclient.execute(httppost);
 				InputStream content = response.getEntity().getContent();
 				BufferedReader br = new BufferedReader(new InputStreamReader(content));
 				String line;
@@ -180,6 +207,7 @@ public class LogActivity extends Activity {
 					sb.append(line);
 				}
 				Log.d("response", sb.toString());
+
 			} catch (ClientProtocolException e) {
 
 				e.printStackTrace();
@@ -188,6 +216,7 @@ public class LogActivity extends Activity {
 				e.printStackTrace();
 				return false;
 			}
+			// winning
 			return true;
 		}
 	}

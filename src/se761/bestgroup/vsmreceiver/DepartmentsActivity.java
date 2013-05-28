@@ -34,7 +34,8 @@ public class DepartmentsActivity extends ListActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
+		
+		// get a list view, give it an adapter and an onclick listener
 		final ListView listView = getListView();
 		adapter = new ArrayAdapter<String>(this,
 				android.R.layout.simple_list_item_1);
@@ -42,11 +43,14 @@ public class DepartmentsActivity extends ListActivity {
 		listView.setOnItemClickListener(new OnItemClickListener() {
 			public void onItemClick(AdapterView<?> parent, View view,
 					int position, long id) {
+				// get the name of the department from the item
 				String department = (String) listView
 						.getItemAtPosition(position);
-
+				
+				// give the department to the intent
 				Intent data = new Intent();
 				data.putExtra("department", department);
+				// setResult for next activity and finish up
 				setResult(RESULT_OK, data);
 				finish();
 			}
@@ -55,16 +59,20 @@ public class DepartmentsActivity extends ListActivity {
 		new HttpTask().execute();
 	}
 
+	/**
+	 * Task for getting departments from server
+	 * @author Jourdan Harvey, Mike Little
+	 *
+	 */
 	private class HttpTask extends AsyncTask<Void, Void, List<String>> {
 
 		@Override
 		protected List<String> doInBackground(Void... params) {
-			Log.v("Departments", "Starting getDeps");
 			List<String> departments = new ArrayList<String>();
-			Log.v("Departments", getStr(R.string.departments_endpoint));
 			HttpGet get = new HttpGet(getStr(R.string.departments_endpoint));
 			HttpClient httpclient = new DefaultHttpClient();
 			try {
+				// get response and build result
 				HttpResponse response = httpclient.execute(get);
 				InputStream ins = response.getEntity().getContent();
 				BufferedReader buff = new BufferedReader(new InputStreamReader(ins));
@@ -73,7 +81,7 @@ public class DepartmentsActivity extends ListActivity {
 				while ((line = buff.readLine()) != null) {
 					sb.append(line);
 				}
-				Log.v("Departments", sb.toString());
+				// Process the json array
 				JSONArray arr = new JSONArray(sb.toString());
 				for (int i = 0; i < arr.length(); i++) {
 					Log.v("Departments",
@@ -89,9 +97,13 @@ public class DepartmentsActivity extends ListActivity {
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
+			// return list of departments for onPostExecute
 			return departments;
 		}
 
+		/**
+		 * Add each department in the list to the adapter for the List View
+		 */
 		@Override
 		protected void onPostExecute(List<String> departments) {
 			for (String s : departments) {
@@ -99,7 +111,11 @@ public class DepartmentsActivity extends ListActivity {
 			}
 		}
 	}
-
+	/**
+	 * Helper method for get strings from the values file
+	 * @param id of resource
+	 * @return value of resource requested
+	 */
 	private String getStr(int id) {
 		return getResources().getString(id);
 	}
